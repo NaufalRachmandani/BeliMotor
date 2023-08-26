@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "411979802072",
+    "project_id": "beli-motor",
+    "storage_bucket": "beli-motor.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:411979802072:android:26a76ecd8ffc9e07437ead",
+        "android_client_info": {
+          "package_name": "com.naufal.belimotor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "411979802072-93euf8m6ma3emt71u0nknq8d67bl9un8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSWmXWMn2Hkv6flPgKvBeY6qK7dSXyVlQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "411979802072-93euf8m6ma3emt71u0nknq8d67bl9un8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
