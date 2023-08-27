@@ -20,11 +20,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
 
             BeliMotorTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
+                Surface {
                     BeliMotorGraph(navController)
                 }
             }

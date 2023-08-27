@@ -30,6 +30,9 @@ fun BeliMotorGraph(navController: NavHostController) {
             SplashScreen(
                 openLoginScreen = {
                     navController.navigate(NavigationRoute.LOGIN_ROUTE)
+                },
+                openMainScreen = {
+                    navController.navigate(NavigationRoute.MAIN)
                 }
             )
         }

@@ -2,7 +2,6 @@ package com.naufal.belimotor.ui.login
 
 import android.text.TextUtils
 import android.util.Patterns
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,22 +15,29 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -40,25 +46,47 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.naufal.belimotor.ui.components.CustomButton
 import com.naufal.belimotor.ui.components.CustomOutlinedTextField
-import com.naufal.belimotor.ui.register.isEmailValid
+import com.naufal.belimotor.ui.theme.BeliMotorTheme
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
     openMainScreen: () -> Unit = {},
     openRegisterScreen: () -> Unit = {},
 ) {
-//    val isLoggedState by viewModel.isLoggedState.collectAsState()
+    val loginState by viewModel.loginState.collectAsState()
+
+    LoginScreenContent(
+        loginState = loginState,
+        openMainScreen = openMainScreen,
+        openRegisterScreen = openRegisterScreen,
+        onLogin = { email, password ->
+            viewModel.login(email, password)
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LoginScreenContent(
+    loginState: LoginViewModel.LoginState = LoginViewModel.LoginState(),
+    openMainScreen: () -> Unit = {},
+    openRegisterScreen: () -> Unit = {},
+    onLogin: (String, String) -> Unit = {_, _ ->}
+) {
+    val snackScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(text = "Masuk", style = MaterialTheme.typography.titleLarge) },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                )
+                ),
             )
         },
     ) { paddingValues ->
@@ -67,6 +95,9 @@ fun LoginScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            var email by rememberSaveable { mutableStateOf("") }
+            var password by rememberSaveable { mutableStateOf("") }
+
             var isButtonEnabled by rememberSaveable { mutableStateOf(false) }
 
             Column(
@@ -74,16 +105,6 @@ fun LoginScreen(
                     .fillMaxSize()
                     .padding(horizontal = 24.dp),
             ) {
-                var email by rememberSaveable { mutableStateOf("") }
-                var password by rememberSaveable { mutableStateOf("") }
-
-                Spacer(modifier = Modifier.height(50.dp))
-
-                Text(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = "Masuk",
-                    style = MaterialTheme.typography.titleMedium,
-                )
 
                 Spacer(modifier = Modifier.height(50.dp))
 
@@ -118,7 +139,7 @@ fun LoginScreen(
                         }
                         .padding(10.dp),
                     text = "Daftar",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
@@ -131,7 +152,27 @@ fun LoginScreen(
                 text = "Masuk",
                 isEnabled = isButtonEnabled
             ) {
-                openMainScreen()
+                onLogin(email, password)
+            }
+
+            if (loginState.loading == true) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+
+            if (loginState.error == true) {
+                LaunchedEffect(snackbarHostState) {
+                    snackScope.launch {
+                        snackbarHostState.showSnackbar(
+                            loginState.message ?: "Gagal masuk"
+                        )
+                    }
+                }
+            }
+
+            if (loginState.success == true) {
+                LaunchedEffect(Unit) {
+                    openMainScreen()
+                }
             }
         }
     }
@@ -210,22 +251,20 @@ fun PasswordField(
     )
 }
 
-@Preview
-@Composable
-fun LoginScreenPreview() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        LoginScreen()
-    }
-}
-
 fun String.isEmailValid(): Boolean {
     return !TextUtils.isEmpty(this) && Patterns.EMAIL_ADDRESS.matcher(this).matches()
 }
 
 fun isButtonEnabled(email: String, password: String): Boolean {
     return email.isEmailValid() && password.length >= 4
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun LoginScreenPreview() {
+    BeliMotorTheme {
+        Surface {
+            LoginScreen()
+        }
+    }
 }
