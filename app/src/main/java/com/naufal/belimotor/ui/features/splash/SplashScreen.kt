@@ -1,4 +1,4 @@
-package com.naufal.belimotor.ui.splash
+package com.naufal.belimotor.ui.features.splash
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +24,7 @@ fun SplashScreen(
     val loginState by viewModel.loginState.collectAsState()
 
     LaunchedEffect(key1 = Unit) {
-        delay(500)
+        delay(2000)
 
         if (loginState.isLogged == true) {
             openMainScreen()

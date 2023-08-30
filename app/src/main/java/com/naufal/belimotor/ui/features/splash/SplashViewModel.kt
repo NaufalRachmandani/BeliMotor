@@ -1,4 +1,4 @@
-package com.naufal.belimotor.ui.splash
+package com.naufal.belimotor.ui.features.splash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

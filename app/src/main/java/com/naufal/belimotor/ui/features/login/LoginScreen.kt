@@ -1,4 +1,4 @@
-package com.naufal.belimotor.ui.login
+package com.naufal.belimotor.ui.features.login
 
 import android.text.TextUtils
 import android.util.Patterns
@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -73,7 +74,7 @@ fun LoginScreenContent(
     loginState: LoginViewModel.LoginState = LoginViewModel.LoginState(),
     openMainScreen: () -> Unit = {},
     openRegisterScreen: () -> Unit = {},
-    onLogin: (String, String) -> Unit = {_, _ ->}
+    onLogin: (String, String) -> Unit = { _, _ -> }
 ) {
     val snackScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -82,7 +83,12 @@ fun LoginScreenContent(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = "Masuk", style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Text(
+                        text = "Masuk",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -187,6 +193,7 @@ fun EmailField(
         modifier = Modifier,
         text = "Email",
         style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
     )
     Spacer(modifier = Modifier.height(8.dp))
     CustomOutlinedTextField(
@@ -200,6 +207,7 @@ fun EmailField(
             Text(
                 text = "Masukkan Email..",
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground,
             )
         },
     )
@@ -216,6 +224,7 @@ fun PasswordField(
         modifier = Modifier,
         text = "Password",
         style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
     )
     Spacer(modifier = Modifier.height(8.dp))
     CustomOutlinedTextField(
@@ -229,6 +238,7 @@ fun PasswordField(
             Text(
                 text = "Masukkan Password..",
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground,
             )
         },
         visualTransformation = if (currentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -264,7 +274,7 @@ fun isButtonEnabled(email: String, password: String): Boolean {
 fun LoginScreenPreview() {
     BeliMotorTheme {
         Surface {
-            LoginScreen()
+            LoginScreenContent()
         }
     }
 }

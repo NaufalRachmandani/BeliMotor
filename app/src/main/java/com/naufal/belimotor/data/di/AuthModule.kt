@@ -20,7 +20,7 @@ object AuthModule {
     }
 
     @Provides
-    fun provideUserRepository(@ApplicationContext appContext: Context,): UserRepository {
+    fun provideUserRepository(@ApplicationContext appContext: Context): UserRepository {
         return UserRepository(appContext)
     }
 }

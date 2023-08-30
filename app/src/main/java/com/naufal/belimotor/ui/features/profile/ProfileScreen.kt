@@ -1,12 +1,12 @@
-package com.naufal.belimotor.ui.profile
+package com.naufal.belimotor.ui.features.profile
 
-import android.widget.Toast
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,17 +16,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -36,39 +34,51 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.naufal.belimotor.R
 import com.naufal.belimotor.data.auth.model.response.UserResponse
-import com.naufal.belimotor.ui.components.CustomAsyncImage
+import com.naufal.belimotor.ui.components.CustomButton
+import com.naufal.belimotor.ui.components.CustomCoilImage
 import com.naufal.belimotor.ui.theme.BeliMotorTheme
+import com.skydoves.landscapist.ImageOptions
 import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onEditClick: () -> Unit = {},
+    openLoginScreen: () -> Unit = {},
 ) {
     val profileState by viewModel.profileState.collectAsState()
+    val logoutState by viewModel.logoutState.collectAsState()
 
-    ProfileScreenContent(profileState = profileState, onEditClick = onEditClick)
+    if (logoutState.success == true) {
+        openLoginScreen()
+    }
+
+    ProfileScreenContent(
+        profileState = profileState,
+        logoutState = logoutState,
+        onEditClick = onEditClick,
+        onLogout = { viewModel.logout() })
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreenContent(
     profileState: ProfileViewModel.ProfileState = ProfileViewModel.ProfileState(),
+    logoutState: ProfileViewModel.LogoutState = ProfileViewModel.LogoutState(),
     onEditClick: () -> Unit = {},
+    onLogout: () -> Unit = {},
 ) {
-    val context = LocalContext.current
     val snackScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    Scaffold { paddingValues ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+    ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -82,14 +92,17 @@ fun ProfileScreenContent(
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    CustomAsyncImage(
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .clickable { onEditClick() },
+                ) {
+                    CustomCoilImage(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(CircleShape),
                         model = profileState.userResponse?.image.toString(),
-                        contentDescription = "avatar",
-                        contentScale = ContentScale.Crop,
+                        imageOptions = ImageOptions(contentScale = ContentScale.Crop),
                     )
 
                     Icon(
@@ -141,6 +154,20 @@ fun ProfileScreenContent(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
+            }
+
+            CustomButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(24.dp),
+                text = "Logout",
+                buttonColors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Red,
+                ),
+                textColor = Color.White,
+            ) {
+                onLogout()
             }
 
             if (profileState.loading == true) {

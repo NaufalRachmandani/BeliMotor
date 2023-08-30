@@ -1,10 +1,11 @@
-package com.naufal.belimotor.ui.profile
+package com.naufal.belimotor.ui.features.profile
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
+import com.naufal.belimotor.data.auth.AuthPrefs
 import com.naufal.belimotor.data.auth.UserRepository
 import com.naufal.belimotor.data.auth.model.request.RegisterRequest
 import com.naufal.belimotor.data.auth.model.response.UserResponse
@@ -20,6 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
+    private val authPrefs: AuthPrefs,
 ) : ViewModel() {
 
     private val imagesRef: StorageReference =
@@ -27,6 +29,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _profileState = MutableStateFlow(ProfileState())
     val profileState = _profileState.asStateFlow()
+
+    private val _logoutState = MutableStateFlow(LogoutState())
+    val logoutState = _logoutState.asStateFlow()
 
     init {
         getUser()
@@ -44,7 +49,7 @@ class ProfileViewModel @Inject constructor(
                             response?.apply {
                                 val imagePath = imagesRef.child(this.userId)
                                 imagePath.downloadUrl.addOnSuccessListener {
-                                    response.image = it.toString()
+                                    response.image = it
 
                                     viewModelScope.launch {
                                         _profileState.emit(ProfileState(userResponse = response))
@@ -72,25 +77,12 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun refresh() {
+    fun logout() {
         viewModelScope.launch(Dispatchers.IO) {
-            userRepository.getUser()
-                .onStart {}
-                .collect { appResult ->
-                    appResult.addOnResultListener(
-                        onSuccess = { response ->
-                            _profileState.emit(ProfileState(userResponse = response))
-                        },
-                        onFailure = { data, code, message ->
-                            Log.i("ProfileViewModel", message.toString())
-                            _profileState.emit(ProfileState(error = true, message = message))
-                        },
-                        onError = {
-                            Log.i("ProfileViewModel", it?.message.toString())
-                            _profileState.emit(ProfileState(error = true, message = it?.message))
-                        }
-                    )
-                }
+            userRepository.logout()
+
+            authPrefs.setLoginState(false)
+            _logoutState.emit(LogoutState(success = true))
         }
     }
 
@@ -99,5 +91,9 @@ class ProfileViewModel @Inject constructor(
         val error: Boolean? = null,
         val message: String? = null,
         val userResponse: UserResponse? = null,
+    )
+
+    data class LogoutState(
+        val success: Boolean? = null,
     )
 }

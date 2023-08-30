@@ -1,4 +1,4 @@
-package com.naufal.belimotor.ui.main_screen
+package com.naufal.belimotor.ui.features.main_screen
 
 import com.naufal.belimotor.R
 

@@ -1,10 +1,10 @@
-package com.naufal.belimotor.ui.register
+package com.naufal.belimotor.ui.features.login
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naufal.belimotor.data.auth.AuthPrefs
 import com.naufal.belimotor.data.auth.UserRepository
-import com.naufal.belimotor.data.auth.model.request.RegisterRequest
 import com.naufal.belimotor.data.common.addOnResultListener
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -15,38 +15,40 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class RegisterViewModel @Inject constructor(
+class LoginViewModel @Inject constructor(
     private val userRepository: UserRepository,
+    private val authPrefs: AuthPrefs,
 ) : ViewModel() {
 
-    private val _registerState = MutableStateFlow(RegisterState())
-    val registerState = _registerState.asStateFlow()
+    private val _loginState = MutableStateFlow(LoginState())
+    val loginState = _loginState.asStateFlow()
 
-    fun register(registerRequest: RegisterRequest) {
+    fun login(email: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            userRepository.register(registerRequest)
+            userRepository.login(email, password)
                 .onStart {
-                    _registerState.emit(RegisterState(loading = true))
+                    _loginState.emit(LoginState(loading = true))
                 }
                 .collect { appResult ->
                     appResult.addOnResultListener(
                         onSuccess = { response ->
-                            _registerState.emit(RegisterState(success = response))
+                            _loginState.emit(LoginState(success = response))
+                            authPrefs.setLoginState(response ?: false)
                         },
                         onFailure = { data, code, message ->
-                            Log.i("RegisterViewModel", message.toString())
-                            _registerState.emit(RegisterState(error = true, message = message))
+                            Log.i("LoginViewModel", message.toString())
+                            _loginState.emit(LoginState(error = true, message = message))
                         },
                         onError = {
-                            Log.i("RegisterViewModel", it?.message.toString())
-                            _registerState.emit(RegisterState(error = true, message = it?.message))
+                            Log.i("LoginViewModel", it?.message.toString())
+                            _loginState.emit(LoginState(error = true, message = it?.message))
                         }
                     )
                 }
         }
     }
 
-    data class RegisterState(
+    data class LoginState(
         val loading: Boolean? = null,
         val error: Boolean? = null,
         val success: Boolean? = null,

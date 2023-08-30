@@ -63,7 +63,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version")
 
-    implementation(platform("androidx.compose:compose-bom:2023.03.00"))
+    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
     implementation("androidx.activity:activity-compose:1.7.2")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -71,7 +71,6 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.navigation:navigation-compose:2.7.1")
     implementation("androidx.compose.material:material-icons-extended")
-//    implementation("androidx.compose.material:material:1.5.0")
 
     //firebase
     implementation(platform("com.google.firebase:firebase-bom:32.2.3"))
@@ -81,7 +80,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics-ktx")
 
     //image
-    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("com.github.skydoves:landscapist-coil:2.2.7")
 
     // Dependency Injection
     implementation("com.google.dagger:hilt-android:2.44.2")

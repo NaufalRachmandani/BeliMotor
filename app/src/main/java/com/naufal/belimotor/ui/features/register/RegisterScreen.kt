@@ -1,4 +1,4 @@
-package com.naufal.belimotor.ui.register
+package com.naufal.belimotor.ui.features.register
 
 import android.net.Uri
 import android.text.TextUtils
@@ -21,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.ImageSearch
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -50,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -57,10 +57,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.naufal.belimotor.data.auth.model.request.RegisterRequest
-import com.naufal.belimotor.ui.components.CustomAsyncImage
 import com.naufal.belimotor.ui.components.CustomButton
+import com.naufal.belimotor.ui.components.CustomCoilImage
 import com.naufal.belimotor.ui.components.CustomOutlinedTextField
 import com.naufal.belimotor.ui.theme.BeliMotorTheme
+import com.skydoves.landscapist.ImageOptions
 import kotlinx.coroutines.launch
 
 @Composable
@@ -94,7 +95,12 @@ fun RegisterScreenContent(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = "Daftar", style = MaterialTheme.typography.titleMedium) },
+                title = {
+                    Text(
+                        text = "Daftar",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    )
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -154,25 +160,13 @@ fun RegisterScreenContent(
                             )
                         },
                 ) {
-                    if (image == Uri.EMPTY) {
-                        Icon(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape),
-                            imageVector = Icons.Filled.ImageSearch,
-                            contentDescription = "avatar",
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    } else {
-                        CustomAsyncImage(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape),
-                            model = image.toString(),
-                            contentDescription = "avatar",
-                            contentScale = ContentScale.Crop
-                        )
-                    }
+                    CustomCoilImage(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape),
+                        model = image.toString(),
+                        imageOptions = ImageOptions(contentScale = ContentScale.Crop),
+                    )
 
                     Icon(
                         modifier = Modifier
@@ -284,6 +278,7 @@ fun EmailField(
         modifier = Modifier,
         text = "Email",
         style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
     )
     Spacer(modifier = Modifier.height(8.dp))
     CustomOutlinedTextField(
@@ -297,6 +292,7 @@ fun EmailField(
             Text(
                 text = "Masukkan Email..",
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground,
             )
         },
     )
@@ -313,6 +309,7 @@ fun PasswordField(
         modifier = Modifier,
         text = "Password",
         style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
     )
     Spacer(modifier = Modifier.height(8.dp))
     CustomOutlinedTextField(
@@ -326,6 +323,7 @@ fun PasswordField(
             Text(
                 text = "Masukkan Password..",
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground,
             )
         },
         visualTransformation = if (currentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -357,6 +355,7 @@ fun NameField(
         modifier = Modifier,
         text = "Nama",
         style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
     )
     Spacer(modifier = Modifier.height(8.dp))
     CustomOutlinedTextField(
@@ -370,6 +369,7 @@ fun NameField(
             Text(
                 text = "Masukkan nama kamu..",
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground,
             )
         },
     )
@@ -384,6 +384,7 @@ fun MotorField(
         modifier = Modifier,
         text = "Motor Favorit",
         style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
     )
     Spacer(modifier = Modifier.height(8.dp))
     CustomOutlinedTextField(
@@ -397,6 +398,7 @@ fun MotorField(
             Text(
                 text = "Masukkan motor favorit kamu..",
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground,
             )
         },
     )

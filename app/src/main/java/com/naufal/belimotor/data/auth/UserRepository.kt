@@ -1,6 +1,7 @@
 package com.naufal.belimotor.data.auth
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import android.view.View
 import androidx.core.net.toUri
@@ -9,10 +10,12 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
+import com.naufal.belimotor.data.auth.model.request.EditUserRequest
 import com.naufal.belimotor.data.auth.model.request.RegisterRequest
 import com.naufal.belimotor.data.auth.model.response.UserResponse
 import com.naufal.belimotor.data.common.AppResult
 import com.naufal.belimotor.data.common.GetFile
+import com.naufal.belimotor.data.motor.model.MotorDetail
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -78,9 +81,8 @@ class UserRepository @Inject constructor(
             awaitClose { snapshotListener.isCanceled() }
         }
 
-    fun logout(): Flow<AppResult<Boolean>> = callbackFlow {
+    fun logout(){
         auth.signOut()
-        trySend(AppResult.OnSuccess(true)).isSuccess
     }
 
     suspend fun getUser(): Flow<AppResult<UserResponse>> = callbackFlow {
@@ -88,9 +90,13 @@ class UserRepository @Inject constructor(
             dbUsers.document(it.uid)
                 .addSnapshotListener { snapshot, e ->
                     val response = if (snapshot != null) {
-                        val dataUser = snapshot.toObject(UserResponse::class.java)
-
-                        AppResult.OnSuccess(dataUser)
+                        try {
+                            val dataUser = snapshot.toObject(UserResponse::class.java)
+                            AppResult.OnSuccess(dataUser)
+                        } catch (e: Exception) {
+                            Log.e("UserRepository", e.message.toString())
+                            AppResult.OnFailure(message = e.message ?: "")
+                        }
                     } else {
                         AppResult.OnFailure(message = e?.message ?: "")
                     }
@@ -102,37 +108,34 @@ class UserRepository @Inject constructor(
         awaitClose { snapshotListener?.remove() }
     }
 
-//    override suspend fun editUser(editUserEntity: EditUserEntity): Flow<Resource<Boolean>> =
-//        callbackFlow {
-//            val snapshotListener = db.runBatch {
-//                val userEntity = editUserEntity.userEntity
-//                dbUsers.document(userEntity.userId).update(
-//                    mapOf(
-//                        "fullName" to userEntity.fullName,
-//                        "major" to userEntity.major,
-//                        "nim" to userEntity.nim,
-//                        "noHp" to userEntity.noHp,
-//                        "training" to userEntity.training,
-//                        "role" to userEntity.role
-//                    )
-//                )
-//
-//                //upload photo
-//                if (editUserEntity.pathImage != "") {
-//                    val file = Uri.fromFile(File(editUserEntity.pathImage))
-//                    val storageRef = imagesRef.child(userEntity.userId)
-//                    storageRef.putFile(file)
-//                }
-//            }.addOnSuccessListener {
-//                Log.i("UserRepositoryImpl", "editUser success")
-//                trySend(Resource.Success(true)).isSuccess
-//            }.addOnFailureListener { error ->
-//                Log.i("UserRepositoryImpl", "editUser failed")
-//                trySend(Resource.Error(error.checkFirebaseError()))
-//            }
-//            awaitClose { snapshotListener.isCanceled() }
-//        }
+    suspend fun editUser(editUserRequest: EditUserRequest): Flow<AppResult<Boolean>> =
+        callbackFlow {
+            val snapshotListener = db.runBatch {
+                auth.currentUser?.let {
+                    dbUsers.document(it.uid).update(
+                        mapOf(
+                            "name" to editUserRequest.name,
+                            "favMotor" to editUserRequest.favMotor
+                        )
+                    )
 
+                    //upload photo
+                    if (editUserRequest.image != Uri.EMPTY) {
+                        val file = GetFile.getFile(context, editUserRequest.image)
+                        val storageRef = imagesRef.child(it.uid)
+                        storageRef.putFile(file.toUri())
+                    }
+                }
+            }.addOnSuccessListener {
+                Log.i("UserRepository", "editUser success")
+                trySend(AppResult.OnSuccess(true))
+            }.addOnFailureListener { error ->
+                Log.i("UserRepository", "editUser failed")
+                trySend(AppResult.OnFailure(message = error.message))
+            }
+
+            awaitClose { snapshotListener.isCanceled() }
+        }
 
     //check the training participantNow < participant max
     //update participantNow in training
