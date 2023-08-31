@@ -7,6 +7,7 @@ This guide will walk you through the steps to set up and run the Android Jetpack
 Before you begin, ensure you have the following prerequisites installed on your machine:
 
 - [Android Studio](https://developer.android.com/studio) (recommended version: Giraffe+)
+- JDK 17
 - Android SDK (API level 24+)
 - Kotlin (usually bundled with Android Studio)
 
