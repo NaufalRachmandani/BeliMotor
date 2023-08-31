@@ -7,9 +7,9 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import com.naufal.belimotor.data.auth.AuthPrefs
 import com.naufal.belimotor.data.auth.UserRepository
-import com.naufal.belimotor.data.auth.model.request.RegisterRequest
 import com.naufal.belimotor.data.auth.model.response.UserResponse
 import com.naufal.belimotor.data.common.addOnResultListener
+import com.naufal.belimotor.data.motor.model.MotorDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,15 +30,23 @@ class ProfileViewModel @Inject constructor(
     private val _profileState = MutableStateFlow(ProfileState())
     val profileState = _profileState.asStateFlow()
 
+    private val _motorListState = MutableStateFlow(MotorListState())
+    val motorListState = _motorListState.asStateFlow()
+
     private val _logoutState = MutableStateFlow(LogoutState())
     val logoutState = _logoutState.asStateFlow()
 
     init {
-        getUser()
+        getMotorList()
     }
 
-    private fun getUser() {
+    fun getUser() {
         viewModelScope.launch(Dispatchers.IO) {
+            Log.i(
+                "ProfileViewModel",
+                "get user"
+            )
+
             userRepository.getUser()
                 .onStart {
                     _profileState.emit(ProfileState(loading = true))
@@ -77,6 +85,35 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    private fun getMotorList() {
+        viewModelScope.launch(Dispatchers.IO) {
+            userRepository.getUserMotorList()
+                .onStart {
+                    _motorListState.emit(MotorListState(loading = true))
+                }
+                .collect { appResult ->
+                    appResult.addOnResultListener(
+                        onSuccess = { response ->
+                            _motorListState.emit(MotorListState(motorList = response))
+                        },
+                        onFailure = { data, code, message ->
+                            Log.i("ProfileViewModel", message.toString())
+                            _motorListState.emit(MotorListState(error = true, message = message))
+                        },
+                        onError = {
+                            Log.i("ProfileViewModel", it?.message.toString())
+                            _motorListState.emit(
+                                MotorListState(
+                                    error = true,
+                                    message = it?.message
+                                )
+                            )
+                        }
+                    )
+                }
+        }
+    }
+
     fun logout() {
         viewModelScope.launch(Dispatchers.IO) {
             userRepository.logout()
@@ -91,6 +128,13 @@ class ProfileViewModel @Inject constructor(
         val error: Boolean? = null,
         val message: String? = null,
         val userResponse: UserResponse? = null,
+    )
+
+    data class MotorListState(
+        val loading: Boolean? = null,
+        val error: Boolean? = null,
+        val message: String? = null,
+        val motorList: List<MotorDetail?>? = null,
     )
 
     data class LogoutState(

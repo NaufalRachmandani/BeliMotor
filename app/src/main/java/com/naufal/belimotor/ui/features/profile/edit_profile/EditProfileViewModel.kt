@@ -52,11 +52,6 @@ class EditProfileViewModel @Inject constructor(
                                                 userResponse = response
                                             )
                                         )
-
-                                        Log.i(
-                                            "EditProfileViewModel",
-                                            "getUser success"
-                                        )
                                     }
                                 }.addOnFailureListener {
                                     it.message?.let { error ->

@@ -25,6 +25,9 @@ class TransactionViewModel @Inject constructor(
     private val _transactionState = MutableStateFlow(TransactionState())
     val transactionState = _transactionState.asStateFlow()
 
+    private val _updateTransactionState = MutableStateFlow(UpdateTransactionState())
+    val updateTransactionState = _updateTransactionState.asStateFlow()
+
     init {
         getTransactionList()
     }
@@ -53,10 +56,65 @@ class TransactionViewModel @Inject constructor(
         }
     }
 
+    fun proceedTransaction(transactionId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            motorRepository.proceedTransaction(transactionId)
+                .onStart {
+                    _updateTransactionState.emit(UpdateTransactionState(loading = true))
+                }
+                .collect { appResult ->
+                    appResult.addOnResultListener(
+                        onSuccess = { response ->
+                            _updateTransactionState.emit(UpdateTransactionState(success = response, message = "Berhasil melanjutkan transaksi"))
+                        },
+                        onFailure = { data, code, message ->
+                            Log.i("TransactionViewModel", message.toString())
+                            _updateTransactionState.emit(UpdateTransactionState(error = true, message = message))
+                        },
+                        onError = {
+                            Log.i("TransactionViewModel", it?.message.toString())
+                            _updateTransactionState.emit(UpdateTransactionState(error = true, message = it?.message))
+                        }
+                    )
+                }
+        }
+    }
+
+    fun cancelTransaction(transactionId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            motorRepository.cancelTransaction(transactionId)
+                .onStart {
+                    _updateTransactionState.emit(UpdateTransactionState(loading = true))
+                }
+                .collect { appResult ->
+                    appResult.addOnResultListener(
+                        onSuccess = { response ->
+                            _updateTransactionState.emit(UpdateTransactionState(success = response, message = "Berhasil membatalkan transaksi"))
+                        },
+                        onFailure = { data, code, message ->
+                            Log.i("TransactionViewModel", message.toString())
+                            _updateTransactionState.emit(UpdateTransactionState(error = true, message = message))
+                        },
+                        onError = {
+                            Log.i("TransactionViewModel", it?.message.toString())
+                            _updateTransactionState.emit(UpdateTransactionState(error = true, message = it?.message))
+                        }
+                    )
+                }
+        }
+    }
+
     data class TransactionState(
         val loading: Boolean? = null,
         val error: Boolean? = null,
         val message: String? = null,
         val transactionList: List<Transaction?>? = null,
+    )
+
+    data class UpdateTransactionState(
+        val loading: Boolean? = null,
+        val error: Boolean? = null,
+        val message: String? = null,
+        val success: Boolean? = null,
     )
 }

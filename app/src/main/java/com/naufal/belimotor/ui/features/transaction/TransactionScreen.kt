@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,7 +29,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,11 +43,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.naufal.belimotor.data.motor.model.MotorDetail
+import com.naufal.belimotor.data.common.TransactionStatus
 import com.naufal.belimotor.data.motor.model.Transaction
 import com.naufal.belimotor.ui.components.CustomButton
 import com.naufal.belimotor.ui.components.CustomCoilImage
@@ -65,13 +63,19 @@ fun TransactionScreen(
     openMotorDetail: (String) -> Unit = {},
 ) {
     val transactionState by viewModel.transactionState.collectAsState()
+    val updateTransactionState by viewModel.updateTransactionState.collectAsState()
 
     TransactionScreenContent(
         transactionState = transactionState,
+        updateTransactionState = updateTransactionState,
         openHomeScreen = openHomeScreen,
         openMotorDetail = openMotorDetail,
-        onContinue = {},
-        onCancel = {},
+        onContinue = {
+            viewModel.proceedTransaction(it)
+        },
+        onCancel = {
+            viewModel.cancelTransaction(it)
+        },
     )
 }
 
@@ -79,6 +83,7 @@ fun TransactionScreen(
 @Composable
 fun TransactionScreenContent(
     transactionState: TransactionViewModel.TransactionState = TransactionViewModel.TransactionState(),
+    updateTransactionState: TransactionViewModel.UpdateTransactionState = TransactionViewModel.UpdateTransactionState(),
     openHomeScreen: () -> Unit = {},
     openMotorDetail: (String) -> Unit = {},
     onContinue: (String) -> Unit = {},
@@ -154,6 +159,30 @@ fun TransactionScreenContent(
                     }
                 }
             }
+
+            if (updateTransactionState.error == true) {
+                LaunchedEffect(snackbarHostState) {
+                    snackScope.launch {
+                        snackbarHostState.showSnackbar(
+                            updateTransactionState.message.toString()
+                        )
+                    }
+                }
+            }
+
+            if (updateTransactionState.success == true) {
+                LaunchedEffect(snackbarHostState) {
+                    snackScope.launch {
+                        snackbarHostState.showSnackbar(
+                            updateTransactionState.message.toString()
+                        )
+                    }
+                }
+            }
+
+            if (updateTransactionState.loading == true) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
         }
     }
 }
@@ -178,34 +207,22 @@ fun ItemTransaction(
         Row(verticalAlignment = Alignment.CenterVertically) {
             CustomCoilImage(
                 modifier = Modifier
-                    .size(100.dp),
+                    .size(50.dp)
+                    .padding(start = 10.dp, top = 10.dp),
                 model = transaction.motorImage ?: "",
                 imageOptions = ImageOptions(contentScale = ContentScale.Fit),
             )
 
             Spacer(modifier = Modifier.width(6.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 10.dp),
-                    text = "asdasdsadasd",//motorDetail.motorName ?: "-",
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    modifier = Modifier.padding(horizontal = 10.dp),
-                    text = "asdasdasdasdasdasdasdasdasd",//motorDetail.motorDesc ?: "-",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            Text(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 10.dp),
+                text = transaction.motorName ?: "-",
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -219,7 +236,7 @@ fun ItemTransaction(
                 .padding(6.dp)
         ) {
             Text(
-                text = "asdasdasdsad",//motorDetail.motorPrice.toString().toCurrencyFormatID(),
+                text = transaction.motorPrice.toString().toCurrencyFormatID(),
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onPrimary,
             )
@@ -233,24 +250,62 @@ fun ItemTransaction(
                 .padding(horizontal = 10.dp)
                 .align(Alignment.End),
         ) {
-            CustomButton(
-                text = "Batalkan",
-                contentPaddingValues = PaddingValues(6.dp),
-                buttonColors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Red,
-                ),
-                textColor = Color.White,
-            ) {
-                transaction.transactionId?.let { onCancel(it) }
-            }
+            when (transaction.status) {
+                TransactionStatus.Waiting.status -> {
+                    CustomButton(
+                        text = "Batalkan",
+                        contentPaddingValues = PaddingValues(6.dp),
+                        buttonColors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Red,
+                        ),
+                        textColor = Color.White,
+                    ) {
+                        transaction.transactionId?.let { onCancel(it) }
+                    }
 
-            Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
 
-            CustomButton(
-                text = "Lanjutkan Transaksi",
-                contentPaddingValues = PaddingValues(6.dp),
-            ) {
-                transaction.transactionId?.let { onContinue(it) }
+                    CustomButton(
+                        text = "Lanjutkan Transaksi",
+                        contentPaddingValues = PaddingValues(6.dp),
+                    ) {
+                        transaction.transactionId?.let { onContinue(it) }
+                    }
+                }
+
+                TransactionStatus.Cancel.status -> {
+                    Box(
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .padding(horizontal = 10.dp)
+                            .clip(MaterialTheme.shapes.extraSmall)
+                            .background(Color.Red)
+                            .padding(6.dp)
+                    ) {
+                        Text(
+                            text = "Dibatalkan",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White,
+                        )
+                    }
+                }
+
+                TransactionStatus.Success.status -> {
+                    Box(
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .padding(horizontal = 10.dp)
+                            .clip(MaterialTheme.shapes.extraSmall)
+                            .background(Color(0XFF176d33))
+                            .padding(6.dp)
+                    ) {
+                        Text(
+                            text = "Sukses",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White,
+                        )
+                    }
+                }
             }
         }
 
@@ -269,42 +324,20 @@ fun ItemTransactionShimmer(modifier: Modifier = Modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(50.dp)
                     .padding(start = 10.dp, top = 10.dp)
                     .shimmerEffect(),
             )
 
             Spacer(modifier = Modifier.width(6.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(20.dp)
-                        .padding(horizontal = 10.dp)
-                        .shimmerEffect()
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(20.dp)
-                        .padding(horizontal = 10.dp)
-                        .shimmerEffect()
-                )
-
-                Spacer(modifier = Modifier.height(2.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(20.dp)
-                        .padding(horizontal = 10.dp)
-                        .shimmerEffect()
-                )
-            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(20.dp)
+                    .padding(horizontal = 10.dp)
+                    .shimmerEffect()
+            )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
