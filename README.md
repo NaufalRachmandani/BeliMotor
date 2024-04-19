@@ -45,3 +45,5 @@ Before you begin, ensure you have the following prerequisites installed on your 
 ## Conclusion
 
 If you encounter any issues or have questions, feel free to refer to the project's documentation or seek help from the Android developer community.
+
+Jetpack compose project for testing material 3
